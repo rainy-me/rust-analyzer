@@ -1109,6 +1109,106 @@ pub mod foo$0;
     }
 
     #[test]
+    fn test_rename_mod_recursive() {
+        check_expect(
+            "foo2",
+            r#"
+//- /lib.rs
+mod foo$0;
+
+//- /foo.rs
+mod bar;
+mod corge;
+
+//- /foo/bar.rs
+mod qux;
+
+//- /foo/bar/qux.rs
+mod quux;
+
+//- /foo/bar/qux/quux/mod.rs
+// empty
+
+//- /foo/corge.rs
+// empty
+"#,
+            expect![[r#"
+                SourceChange {
+                    source_file_edits: {
+                        FileId(
+                            0,
+                        ): TextEdit {
+                            indels: [
+                                Indel {
+                                    insert: "foo2",
+                                    delete: 4..7,
+                                },
+                            ],
+                        },
+                    },
+                    file_system_edits: [
+                        MoveFile {
+                            src: FileId(
+                                1,
+                            ),
+                            dst: AnchoredPathBuf {
+                                anchor: FileId(
+                                    1,
+                                ),
+                                path: "foo2.rs",
+                            },
+                        },
+                        MoveFile {
+                            src: FileId(
+                                5,
+                            ),
+                            dst: AnchoredPathBuf {
+                                anchor: FileId(
+                                    1,
+                                ),
+                                path: "foo2/corge.rs",
+                            },
+                        },
+                        MoveFile {
+                            src: FileId(
+                                2,
+                            ),
+                            dst: AnchoredPathBuf {
+                                anchor: FileId(
+                                    1,
+                                ),
+                                path: "foo2/bar.rs",
+                            },
+                        },
+                        MoveFile {
+                            src: FileId(
+                                3,
+                            ),
+                            dst: AnchoredPathBuf {
+                                anchor: FileId(
+                                    1,
+                                ),
+                                path: "foo2/bar/qux.rs",
+                            },
+                        },
+                        MoveFile {
+                            src: FileId(
+                                4,
+                            ),
+                            dst: AnchoredPathBuf {
+                                anchor: FileId(
+                                    1,
+                                ),
+                                path: "foo2/bar/qux/quux/mod.rs",
+                            },
+                        },
+                    ],
+                    is_snippet: false,
+                }
+            "#]],
+        )
+    }
+    #[test]
     fn test_rename_mod_ref_by_super() {
         check(
             "baz",

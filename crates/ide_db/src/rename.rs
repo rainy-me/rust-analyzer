@@ -177,19 +177,10 @@ fn rename_mod(
 
     let mut source_change = SourceChange::default();
 
-    let InFile { file_id, value: def_source } = module.definition_source(sema.db);
-    let file_id = file_id.original_file(sema.db);
-    if let ModuleSource::SourceFile(..) = def_source {
-        // mod is defined in path/to/dir/mod.rs
-        let path = if module.is_mod_rs(sema.db) {
-            format!("../{}/mod.rs", new_name)
-        } else {
-            format!("{}.rs", new_name)
-        };
-        let dst = AnchoredPathBuf { anchor: file_id, path };
-        let move_file = FileSystemEdit::MoveFile { src: file_id, dst };
-        source_change.push_file_system_edit(move_file);
-    }
+    source_change.extend(
+        recursive_move_mod(sema.db, module, None, Some(new_name.to_string()), None)
+            .unwrap_or_default(),
+    );
 
     if let Some(src) = module.declaration_source(sema.db) {
         let file_id = src.file_id.original_file(sema.db);
@@ -216,6 +207,47 @@ fn rename_mod(
     source_change.extend(ref_edits);
 
     Ok(source_change)
+}
+
+fn recursive_move_mod(
+    db: &RootDatabase,
+    module: hir::Module,
+    parent_path: Option<String>,
+    new_name: Option<String>,
+    anchor: Option<FileId>,
+) -> Option<Vec<FileSystemEdit>> {
+    let InFile { file_id, value: def_source } = module.definition_source(db);
+    if let ModuleSource::SourceFile(..) = def_source {
+        let file_id = file_id.original_file(db);
+        let is_mod_rs = module.is_mod_rs(db);
+        // use new name or current module name
+        let mod_name = new_name.unwrap_or(module.name(db)?.to_string());
+        let mod_path = match parent_path {
+            // only append to parent path in child
+            Some(parent_path) => format!("{}/{}", parent_path, mod_name),
+            // one layer up for mod.rs
+            None if is_mod_rs => format!("../{}", mod_name),
+            // replace if not mod.rs
+            None => mod_name,
+        };
+        let path =
+            if is_mod_rs { format!("{}/mod.rs", mod_path) } else { format!("{}.rs", mod_path) };
+        // init or reuse root anchor
+        let anchor = anchor.unwrap_or(file_id);
+        let dst = AnchoredPathBuf { anchor, path };
+        let mut fs_edits = vec![FileSystemEdit::MoveFile { src: file_id, dst }];
+        fs_edits.extend(
+            module
+                .children(db)
+                .filter_map(|child| {
+                    recursive_move_mod(db, child, Some(mod_path.clone()), None, Some(anchor))
+                })
+                .flatten()
+                .collect::<Vec<_>>(),
+        );
+        return Some(fs_edits);
+    }
+    None
 }
 
 fn rename_reference(
