@@ -182,3 +182,11 @@ export const enum Direction {
     Up = "Up",
     Down = "Down",
 }
+
+export interface OrganizeImportsParams {
+    textDocument: lc.TextDocumentIdentifier;
+}
+
+export const organizeImports = new lc.RequestType<OrganizeImportsParams, lc.TextEdit[], void>(
+    "experimental/organizeImports"
+);

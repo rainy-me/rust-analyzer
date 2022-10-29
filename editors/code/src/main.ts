@@ -23,11 +23,11 @@ export async function activate(
         vscode.window
             .showWarningMessage(
                 `You have both the rust-analyzer (rust-lang.rust-analyzer) and Rust (rust-lang.rust) ` +
-                    "plugins enabled. These are known to conflict and cause various functions of " +
-                    "both plugins to not work correctly. You should disable one of them.",
+                "plugins enabled. These are known to conflict and cause various functions of " +
+                "both plugins to not work correctly. You should disable one of them.",
                 "Got it"
             )
-            .then(() => {}, console.error);
+            .then(() => { }, console.error);
     }
 
     const ctx = new Ctx(context, createCommands(), fetchWorkspace());
@@ -99,7 +99,7 @@ function createCommands(): Record<string, CommandFactory> {
                     health: "stopped",
                 });
             },
-            disabled: (_) => async () => {},
+            disabled: (_) => async () => { },
         },
 
         analyzerStatus: { enabled: commands.analyzerStatus },
@@ -128,6 +128,7 @@ function createCommands(): Record<string, CommandFactory> {
         cancelFlycheck: { enabled: commands.cancelFlycheck },
         ssr: { enabled: commands.ssr },
         serverVersion: { enabled: commands.serverVersion },
+        organizeImports: { enabled: commands.organizeImports },
         // Internal commands which are invoked by the server.
         applyActionGroup: { enabled: commands.applyActionGroup },
         applySnippetWorkspaceEdit: { enabled: commands.applySnippetWorkspaceEditCommand },

@@ -18,9 +18,9 @@ use lsp_server::ErrorCode;
 use lsp_types::{
     CallHierarchyIncomingCall, CallHierarchyIncomingCallsParams, CallHierarchyItem,
     CallHierarchyOutgoingCall, CallHierarchyOutgoingCallsParams, CallHierarchyPrepareParams,
-    CodeLens, CompletionItem, Diagnostic, DiagnosticTag, DocumentFormattingParams, FoldingRange,
-    FoldingRangeParams, HoverContents, InlayHint, InlayHintParams, Location, LocationLink,
-    NumberOrString, Position, PrepareRenameResponse, Range, RenameParams,
+    CodeActionKind, CodeLens, CompletionItem, Diagnostic, DiagnosticTag, DocumentFormattingParams,
+    FoldingRange, FoldingRangeParams, HoverContents, InlayHint, InlayHintParams, Location,
+    LocationLink, NumberOrString, Position, PrepareRenameResponse, Range, RenameParams,
     SemanticTokensDeltaParams, SemanticTokensFullDeltaResult, SemanticTokensParams,
     SemanticTokensRangeParams, SemanticTokensRangeResult, SemanticTokensResult, SymbolInformation,
     SymbolTag, TextDocumentIdentifier, Url, WorkspaceEdit,
@@ -1622,6 +1622,31 @@ pub(crate) fn handle_move_item(
         }
         None => Ok(vec![]),
     }
+}
+
+pub(crate) fn handle_organize_imports(
+    snap: GlobalStateSnapshot,
+    params: lsp_ext::OrganizeImportsParams,
+) -> Result<Vec<lsp_types::TextEdit>> {
+    let _p = profile::span("handle_organize_imports");
+    let file_id = from_proto::file_id(&snap, &params.text_document.uri)?;
+
+    let mut res: Vec<lsp_types::TextEdit> = Vec::new();
+
+    for fix in snap.check_fixes.values().filter_map(|it| it.get(&file_id)).into_iter().flatten() {
+        if fix.action.kind != Some(CodeActionKind::QUICKFIX) {
+            continue;
+        }
+
+        if let Some(edit) = fix.action.edit.as_ref() {
+            if let Some(changes) = edit.changes.as_ref() {
+                if let Some(edits) = changes.get(&params.text_document.uri) {
+                    res.append(&mut edits.clone());
+                }
+            }
+        }
+    }
+    Ok(res)
 }
 
 fn to_command_link(command: lsp_types::Command, tooltip: String) -> lsp_ext::CommandLink {

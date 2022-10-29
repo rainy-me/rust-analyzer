@@ -57,6 +57,7 @@ mod view_crate_graph;
 mod view_hir;
 mod view_item_tree;
 mod shuffle_crate_graph;
+// mod organize_imports;
 
 use std::sync::Arc;
 
@@ -685,6 +686,13 @@ impl Analysis {
     ) -> Cancellable<Option<TextEdit>> {
         self.with_db(|db| move_item::move_item(db, range, direction))
     }
+
+    // pub fn organize_imports(
+    //     &self,
+    //     file_id: FileId,
+    // ) -> Cancellable<Option<TextEdit>> {
+    //     self.with_db(|db| organize_imports::organize_imports(db, file_id))
+    // }
 
     /// Performs an operation on the database that may be canceled.
     ///

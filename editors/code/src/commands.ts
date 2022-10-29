@@ -156,6 +156,23 @@ export function moveItem(ctx: CtxInit, direction: ra.Direction): Cmd {
     };
 }
 
+export function organizeImports(ctx: CtxInit): Cmd {
+    return async () => {
+        const editor = ctx.activeRustEditor;
+        if (!editor) return;
+        const client = ctx.client;
+
+        const lcEdits = await client.sendRequest(ra.organizeImports, {
+            textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(editor.document),
+        });
+
+        if (!lcEdits) return;
+
+        const edits = await client.protocol2CodeConverter.asTextEdits(lcEdits);
+        await applySnippetTextEdits(editor, edits);
+    };
+}
+
 export function onEnter(ctx: CtxInit): Cmd {
     async function handleKeypress() {
         const editor = ctx.activeRustEditor;

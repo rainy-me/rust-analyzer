@@ -659,6 +659,7 @@ impl GlobalState {
             .on::<lsp_ext::ExternalDocs>(handlers::handle_open_docs)
             .on::<lsp_ext::OpenCargoToml>(handlers::handle_open_cargo_toml)
             .on::<lsp_ext::MoveItem>(handlers::handle_move_item)
+            .on::<lsp_ext::OrganizeImports>(handlers::handle_organize_imports)
             .on::<lsp_ext::WorkspaceSymbol>(handlers::handle_workspace_symbol)
             .on::<lsp_ext::OnTypeFormatting>(handlers::handle_on_type_formatting)
             .on::<lsp_types::request::DocumentSymbolRequest>(handlers::handle_document_symbol)

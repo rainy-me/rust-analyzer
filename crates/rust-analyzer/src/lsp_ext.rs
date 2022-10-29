@@ -489,6 +489,20 @@ pub enum MoveItemDirection {
     Down,
 }
 
+pub enum OrganizeImports {}
+
+impl Request for OrganizeImports {
+    type Params = OrganizeImportsParams;
+    type Result = Vec<lsp_types::TextEdit>;
+    const METHOD: &'static str = "experimental/organizeImports";
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OrganizeImportsParams {
+    pub text_document: TextDocumentIdentifier,
+}
+
 #[derive(Debug)]
 pub enum WorkspaceSymbol {}
 
